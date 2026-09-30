@@ -12,3 +12,9 @@ html{font-size:20px}body{font-size:1rem;color:#173537}p{color:#354f51}.button{fo
 .button.kakao,.mobile-actions>a.kakao{background:#fee500;color:#191919}.button.kakao:hover{background:#f2d900}@media(max-width:760px){.mobile-actions{grid-template-columns:repeat(3,minmax(0,1fr))}.mobile-actions>a{font-size:.9rem;padding:10px 6px}}
 
 .button.naver,.mobile-actions>a.naver{background:#087f3d;color:#fff}.button.naver:hover{background:#066b33}@media(max-width:760px){.mobile-actions{grid-template-columns:repeat(2,minmax(0,1fr))}.mobile-actions>a{min-height:56px;font-size:1rem}.footer{padding-bottom:145px}.content{padding-bottom:135px}body{padding-bottom:112px}}
+/* Keep visible labels alongside decorative contact icons. */
+.button[href^="tel:"]::before,.button.naver::before,.button.kakao::before,.button[href*="maps/"]::before,.button[href*="location"]::before,.button[href="#guide-location"]::before,.mobile-actions>a::before{content:"";display:inline-block;width:26px;height:26px;flex:0 0 26px;background:currentColor;mask:var(--contact-icon) center/contain no-repeat;-webkit-mask:var(--contact-icon) center/contain no-repeat}
+.button,.mobile-actions>a{gap:9px}
+a[href^="tel:"]{--contact-icon:url('/images/icon-phone.svg')}.naver{--contact-icon:url('/images/icon-calendar.svg')}.kakao{--contact-icon:url('/images/icon-kakao.svg')}a[href*="maps/"],a[href*="location"],a[href="#guide-location"]{--contact-icon:url('/images/icon-map.svg')}
+@media(max-width:760px){.mobile-actions>a{display:flex;align-items:center;justify-content:center}.mobile-actions>a::before{width:26px;height:26px;flex-basis:26px}}
+.button.kakao::before,.mobile-actions>a.kakao::before{background:url("/images/icon-kakao.svg") center/contain no-repeat;mask:none;-webkit-mask:none}
