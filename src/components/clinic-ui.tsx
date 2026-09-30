@@ -2,7 +2,7 @@
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
-import { treatmentLanguages } from '@/content/treatment-languages';
+import { treatmentLanguages, treatmentSlugs } from '@/content/treatment-languages';
 import { clinic, addressText } from '@/config/clinic';
 import { languages, type Language } from '@/content/languages';
 const menuLabels = { en: 'Menu', zh: '菜单', vi: 'Menu', mn: 'Цэс', ne: 'मेनु', ru: 'Меню', uz: 'Menyu', th: 'เมนู' };
@@ -27,9 +27,12 @@ const flagArt: Record<string,string> = {
 function LanguageFlag({code}:{code:string}) { return flagArt[code] ? <svg aria-hidden="true" width="30" height="20" viewBox="0 0 60 40" style={{verticalAlign:'middle',marginRight:7,flexShrink:0}} dangerouslySetInnerHTML={{__html:flagArt[code]}}/> : null; }
 export function Header() {
   const guide = useGuide();
+  const pathname = usePathname();
+  const candidate = pathname.startsWith('/guide/') ? pathname.split('/')[4] : pathname.startsWith('/treatments/') ? pathname.split('/')[2] : undefined;
+  const treatmentSlug = candidate && treatmentSlugs.includes(candidate as typeof treatmentSlugs[number]) ? candidate : undefined;
   const links = guide ? [[`/guide/${guide.code}/#guide-treatments`, treatmentLanguages[guide.code].menu], [`/guide/${guide.code}/#guide-hours`, guide.text.hours], [`/guide/${guide.code}/#guide-location`, guide.text.directions], [`/guide/${guide.code}/#guide-before`, guide.text.appointment]] : nav;
   const menu = guide ? menuLabels[guide.code] : '메뉴';
-  return <header className="header" lang={guide?.text.lang || 'ko'}><nav className="language-nav container" aria-label="언어 선택 / Language"><Link href="/" lang="ko"><LanguageFlag code="ko"/>한국어</Link>{Object.entries(languages).map(([code, text]) => <Link key={code} href={`/guide/${code}/`} lang={text.lang} aria-current={guide?.code === code ? 'page' : undefined}><LanguageFlag code={code}/>{text.label}</Link>)}</nav><div className="container header-inner"><Brand/><nav className="desktop-nav" aria-label={menu}>{links.map(([url,name])=><Link key={url} href={url}>{name}</Link>)}</nav><details className="mobile-menu" key={guide?.code || 'ko'}><summary>{menu}</summary><nav aria-label={menu}>{links.map(([url,name])=><Link key={url} href={url}>{name}</Link>)}</nav></details></div></header>;
+  return <header className="header" lang={guide?.text.lang || 'ko'}><nav className="language-nav container" aria-label="언어 선택 / Language"><Link href={treatmentSlug?`/treatments/${treatmentSlug}/`:"/"} lang="ko"><LanguageFlag code="ko"/>한국어</Link>{Object.entries(languages).map(([code, text]) => <Link key={code} href={treatmentSlug?`/guide/${code}/treatments/${treatmentSlug}/`:`/guide/${code}/`} lang={text.lang} aria-current={guide?.code === code ? 'page' : undefined}><LanguageFlag code={code}/>{text.label}</Link>)}</nav><div className="container header-inner"><Brand/><nav className="desktop-nav" aria-label={menu}>{links.map(([url,name])=><Link key={url} href={url}>{name}</Link>)}</nav><details className="mobile-menu" key={guide?.code || 'ko'}><summary>{menu}</summary><nav aria-label={menu}>{links.map(([url,name])=><Link key={url} href={url}>{name}</Link>)}</nav></details></div></header>;
 }
 export function Hours() { return <div className="hours-list">{clinic.hours.map(h=><div key={h.label}><span>{h.label}</span><strong>{h.open}<span className="dash">–</span>{h.close}</strong></div>)}</div>; }
 export function ContactActions() { return <div className="actions"><Link className="button" href="/treatments">진료 안내</Link><a className="button secondary" href="/location/#location-map">오시는 길</a>{clinic.phone ? <a className="button secondary" href={`tel:${clinic.phone.replace(/[^\d+]/g,'')}`}>전화하기</a> : <span className="button inactive" aria-disabled="true">전화 연결 준비 중</span>}<NaverBooking/><KakaoContact/></div>; }
