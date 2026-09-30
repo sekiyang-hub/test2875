@@ -4,7 +4,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { clinic, addressText } from '@/config/clinic';
 import { languages, type Language } from '@/content/languages';
-const menuLabels = { en: 'Menu', zh: '菜单', vi: 'Menu', mn: 'Цэс' };
+const menuLabels = { en: 'Menu', zh: '菜单', vi: 'Menu', mn: 'Цэс', ne: 'मेनु', ru: 'Меню', uz: 'Menyu', th: 'เมนู' };
 function useGuide() { const pathname = usePathname(); const code = pathname.split('/')[2]; return pathname.startsWith('/guide/') && Object.hasOwn(languages, code) ? { code: code as Language, text: languages[code as Language] } : null; }
 export function Brand() { return <Link href="/" className="brand" aria-label={`${clinic.name} 홈`}><span className="brand-symbol" aria-hidden="true">H</span><span>{clinic.name}<small>YEONSU HAPPY DENTAL</small></span></Link>; }
 const nav = [['/about','병원 소개'],['/dentist','의료진'],['/treatments','진료 안내'],['/faq','자주 묻는 질문'],['/location','오시는 길']];
