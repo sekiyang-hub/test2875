@@ -14,7 +14,7 @@ async function getLanguage(params: Promise<{ language: string }>) {
 export async function generateMetadata({ params }: { params: Promise<{ language: string }> }) {
   const { language, text } = await getLanguage(params);
   const result = metadata(text.title, text.intro, `/guide/${language}/`);
-  return { ...result, alternates: { canonical: `${siteURL}/guide/${language}/`, languages: { ko: `${siteURL}/`, en: `${siteURL}/guide/en/`, 'zh-Hans': `${siteURL}/guide/zh/`, vi: `${siteURL}/guide/vi/`, mn: `${siteURL}/guide/mn/` } }, openGraph: { ...result.openGraph, locale: { en: 'en_US', zh: 'zh_CN', vi: 'vi_VN', mn: 'mn_MN' }[language] } };
+  return { ...result, alternates: { canonical: `${siteURL}/guide/${language}/`, languages: { ko: `${siteURL}/`, ...Object.fromEntries(Object.entries(languages).map(([code, entry]) => [entry.lang, `${siteURL}/guide/${code}/`])) } }, openGraph: { ...result.openGraph, locale: { en: 'en_US', zh: 'zh_CN', vi: 'vi_VN', mn: 'mn_MN', ne: 'ne_NP', ru: 'ru_RU', uz: 'uz_UZ', th: 'th_TH' }[language] } };
 }
 export default async function Guide({ params }: { params: Promise<{ language: string }> }) {
   const { text } = await getLanguage(params);
