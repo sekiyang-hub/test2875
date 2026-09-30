@@ -1,0 +1,2 @@
+PASS: 22 treatment pages, 24 pages checked.
+Internal links and anchors, H1, title, description, canonical, image alt/files, JSON-LD parsing and treatment sitemap entries passed.
