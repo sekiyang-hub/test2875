@@ -1,0 +1,3 @@
+import Link from 'next/link';import {Breadcrumb,PageIntro} from '@/components/clinic-ui';import {BreadcrumbSchema} from '@/components/structured-data';import {articles} from '@/content/information';import {metadata} from '@/lib/seo';
+export const generateMetadata=()=>metadata('치과정보','연수행복치과의원 방문 전 확인할 정보와 안내 콘텐츠.','/information');
+export default function Page(){return <div className="container content"><Breadcrumb title="치과정보"/><BreadcrumbSchema title="치과정보" path="/information"/><PageIntro eyebrow="DENTAL JOURNAL" title="치과정보" description="방문에 도움이 되는 안내를 읽어보세요."/>{articles.map(a=><Link className="article-card" href={`/information/${a.slug}`} key={a.slug}><h2>{a.title}</h2><p>{a.description}</p><span>안내 읽기</span></Link>)}</div>;}

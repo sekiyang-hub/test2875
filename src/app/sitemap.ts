@@ -1,0 +1,1 @@
+import type {MetadataRoute} from 'next';import {siteURL} from '@/config/clinic';import {routes} from '@/lib/routes';export const dynamic='force-static';export default function sitemap():MetadataRoute.Sitemap{return siteURL?routes.map(path=>({url:new URL(path,siteURL).toString()})):[];}

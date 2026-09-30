@@ -1,0 +1,1 @@
+import Link from 'next/link';export default function NotFound(){return <div className="container content"><div className="page-intro"><span className="eyebrow">404</span><h1>페이지를 찾을 수 없습니다</h1><p>주소를 확인하거나 홈페이지에서 다시 찾아보세요.</p><Link className="button" href="/">홈으로 가기</Link></div></div>;}

@@ -1,0 +1,3 @@
+import {Breadcrumb,PageIntro} from '@/components/clinic-ui';import {BreadcrumbSchema} from '@/components/structured-data';import {faqs} from '@/content/faq';import {metadata} from '@/lib/seo';
+export const generateMetadata=()=>metadata('자주 묻는 질문','연수행복치과의원 진료시간, 위치, 예약과 주차에 관한 방문 안내.','/faq');
+export default function Page(){return <div className="container content"><Breadcrumb title="자주 묻는 질문"/><BreadcrumbSchema title="자주 묻는 질문" path="/faq"/><PageIntro eyebrow="FREQUENTLY ASKED QUESTIONS" title="자주 묻는 질문" description="방문 전에 궁금한 내용을 확인하세요."/>{faqs.map(f=><details key={f.q}><summary>{f.q}</summary><p>{f.a}</p></details>)}</div>;}

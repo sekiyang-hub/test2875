@@ -1,0 +1,1 @@
+import type {MetadataRoute} from 'next';import {clinic,siteURL} from '@/config/clinic';export const dynamic='force-static';export default function robots():MetadataRoute.Robots{return {rules:{userAgent:'*',...(clinic.contentVerified&&siteURL?{allow:'/'}:{disallow:'/'})},...(siteURL?{sitemap:new URL('/sitemap.xml',siteURL).toString()}:{})};}
