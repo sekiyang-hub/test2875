@@ -8,7 +8,7 @@ const menuLabels = { en: 'Menu', zh: '菜单', vi: 'Menu', mn: 'Цэс', ne: '�
 const kakaoLabels = { en: 'Chat on KakaoTalk', zh: 'KakaoTalk 咨询', vi: 'Tư vấn KakaoTalk', mn: 'KakaoTalk зөвлөгөө', ne: 'KakaoTalk परामर्श', ru: 'Чат в KakaoTalk', uz: 'KakaoTalk orqali maslahat', th: 'แชท KakaoTalk' };
 function KakaoContact({label='카카오톡 상담'}:{label?:string}) { return clinic.kakaoURL ? <a className="button kakao" href={clinic.kakaoURL}>{label}</a> : null; }
 const bookingLabels = { en: 'Book on Naver', zh: 'Naver 预约', vi: 'Đặt lịch Naver', mn: 'Naver цаг захиалах', ne: 'Naver मा बुकिङ', ru: 'Запись через Naver', uz: 'Naver orqali yozilish', th: 'จองผ่าน Naver' };
-function NaverBooking({label='네이버 예약'}:{label?:string}) { return clinic.reservationURL ? <a className="button naver" href={clinic.reservationURL}>{label}</a> : null; }
+function NaverBooking({label='네이버 예약'}:{label?:string}) { return clinic.reservationURL ? <a className="button naver" href={clinic.reservationURL} target="_blank" rel="noopener noreferrer">{label}</a> : null; }
 function useGuide() { const pathname = usePathname(); const code = pathname.split('/')[2]; return pathname.startsWith('/guide/') && Object.hasOwn(languages, code) ? { code: code as Language, text: languages[code as Language] } : null; }
 export function Brand() { return <Link href="/" className="brand" aria-label={`${clinic.name} 홈`}><span className="brand-symbol" aria-hidden="true">H</span><span>{clinic.name}<small>YEONSU HAPPY DENTAL</small></span></Link>; }
 const nav = [['/about','병원 소개'],['/dentist','의료진'],['/treatments','진료 안내'],['/faq','자주 묻는 질문'],['/location','오시는 길']];
