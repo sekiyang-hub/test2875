@@ -1,7 +1,7 @@
 export const clinic = {
   name: '연수행복치과의원', doctorName: '양세기',
   address: { region: '인천광역시', district: '연수구', locality: '연수동', full: '인천광역시 연수구 먼우금로222번길 14 1층' },
-  phone: '010-3915-2875', reservationURL: '', naverMapURL: '', kakaoMapURL: '', kakaoURL: '',
+  phone: '010-3915-2875', reservationURL: '', naverMapURL: '', kakaoMapURL: '', kakaoURL: 'https://pf.kakao.com/_xaxaQXG/chat',
   googleMapURL: `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent('인천광역시 연수구 먼우금로222번길 14')}`,
   googleDirectionsURL: `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent('인천광역시 연수구 먼우금로222번길 14')}`,
   googleMapEmbedURL: 'https://www.google.com/maps/embed?pb=!1m5!3m3!1m2!1s0x357b79e8985ba055%3A0x3a44e5a85414747a!2z7J247LKc6rSR7Jet7IucIOyXsOyImOq1rCDrqLzsmrDquIjroZwyMjLrsojquLggMTQ!5e0!3m2!1sko!2skr!4v1790748403134!5m2!1sko!2skr',
