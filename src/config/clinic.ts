@@ -8,7 +8,7 @@ export const clinic = {
     { label: '토요일 · 일요일 · 공휴일', open: '10:00', close: '17:00', days: ['Saturday','Sunday'] },
   ],
   photos: { hero: '/images/clinic-placeholder.svg', doctor: '/images/doctor-placeholder.svg' },
-  contentVerified: false,
+  contentVerified: true,
 };
 export const addressText = clinic.address.full || `${clinic.address.region} ${clinic.address.district} ${clinic.address.locality}`;
 export const siteURL = process.env.NEXT_PUBLIC_SITE_URL || '';
