@@ -1,3 +1,1 @@
-import Link from 'next/link';import {Breadcrumb,PageIntro,Notice} from '@/components/clinic-ui';import {BreadcrumbSchema} from '@/components/structured-data';import {treatments} from '@/content/treatments';import {metadata} from '@/lib/seo';
-export const generateMetadata=()=>metadata('진료과목 안내','임플란트, 보철치료, 충치치료, 잇몸치료, 스케일링의 기본 정보 초안.','/treatments');
-export default function Page(){return <div className="container content"><Breadcrumb title="진료 안내"/><BreadcrumbSchema title="진료 안내" path="/treatments"/><PageIntro eyebrow="DENTAL CARE" title="진료 안내" description="진료과목별 기본 정보를 살펴보세요."/><Notice>아래 정보는 일반적인 치료 설명 초안입니다. 본원 진료 제공 여부와 세부 내용은 의료진 검토 후 확정합니다.</Notice><div className="content-grid">{treatments.map(t=><Link href={`/treatments/${t.slug}`} className="article-card" key={t.slug}><h2>{t.title}</h2><p>{t.description}</p><span>상세 안내 보기</span></Link>)}</div></div>;}
+export { default, generateMetadata } from "@/components/treatment-index";
