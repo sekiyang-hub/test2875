@@ -12,10 +12,10 @@ export function ClinicStatus() {
     if (!statusStoreConfigured) return;
     let active = true;
     async function update() { try { const next = await readStatus(); if(active) { setSettings(next); setNow(new Date()); setFailed(false); } } catch { if(active) { setFailed(true); setNow(null); } } }
-    setNow(new Date());
+    const initialClock = setTimeout(() => setNow(new Date()), 0);
     void update(); const poll = setInterval(update, 30000); const clock = setInterval(() => setNow(new Date()), 1000);
     const focus = () => void update(); window.addEventListener('focus',focus);
-    return () => { active = false; clearInterval(poll); clearInterval(clock); window.removeEventListener('focus',focus); };
+    return () => { active = false; clearTimeout(initialClock); clearInterval(poll); clearInterval(clock); window.removeEventListener('focus',focus); };
   }, []);
   if (!statusStoreConfigured) return null;
   const language = pathname.startsWith('/guide/') ? pathname.split('/')[2] : 'ko';
