@@ -23,7 +23,7 @@ export default async function Guide({ params }: { params: Promise<{ language: st
       <div className="actions"><a className="button" href={`tel:${clinic.phone}`}>{text.call} · {clinic.phone}</a><a className="button secondary" href="#guide-location">{text.directions}</a></div>
     </div>
     <section id="guide-hours" className="panel"><h2>{text.hours}</h2><div className="hours-list"><div><span>{text.weekdays}</span><strong>{clinic.hours[0].open}–{clinic.hours[0].close}</strong></div><div><span>{text.weekends}</span><strong>{clinic.hours[1].open}–{clinic.hours[1].close}</strong></div></div></section>
-    <section id="guide-location" className="panel"><h2>{text.location}</h2><p>{text.address}</p><p>{text.note}</p><a className="button secondary" href={clinic.naverMapURL}>{text.station}</a></section>
+    <section id="guide-location" className="panel"><h2>{text.location}</h2><p>{text.address}</p><p lang="ko">{clinic.address.full}</p><p>{text.note}</p><a className="button secondary" href={clinic.googleMapURL}>{text.station}</a></section>
     <section id="guide-before" className="panel"><h2>{text.appointment}</h2><p>{text.booking}</p><p>{text.doctor}</p><a className="button" href={`tel:${clinic.phone}`}>{text.call}</a></section>
     <Link className="text-link" href="/">{text.home}</Link>
   </article>;
