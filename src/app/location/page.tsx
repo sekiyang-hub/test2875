@@ -1,3 +1,13 @@
-import {Breadcrumb,PageIntro,Hours,ContactActions,Notice} from '@/components/clinic-ui';import {BreadcrumbSchema} from '@/components/structured-data';import {clinic,addressText} from '@/config/clinic';import {metadata} from '@/lib/seo';
-export const generateMetadata=()=>metadata('오시는 길 · 진료시간','인천 연수동 연수행복치과의원 위치와 평일·주말·공휴일 진료시간 안내.','/location');
-export default function Page(){return <div className="container content"><Breadcrumb title="오시는 길"/><BreadcrumbSchema title="오시는 길" path="/location"/><PageIntro eyebrow="HOURS & LOCATION" title="오시는 길과 진료시간" description="방문에 필요한 정보를 한곳에서 확인하세요."/><div className="content-grid"><section><h2>진료시간</h2><Hours/><p className="muted">점심시간 및 접수 마감시간은 확인 후 안내합니다.</p></section><section><h2>위치 안내</h2><p>{addressText}<br/>오시는 길 · {clinic.directionsLabel}</p>{!clinic.address.full&&<Notice>연수역은 임시 기준 위치입니다. 병원의 상세주소와 정확한 위치는 확인 후 안내합니다.</Notice>}<div className="inline-links">{clinic.naverMapURL&&<a href={clinic.naverMapURL}>{clinic.directionsLabel} 네이버 지도</a>}{clinic.kakaoMapURL&&<a href={clinic.kakaoMapURL}>카카오맵</a>}</div></section></div><div className="map-placeholder"><strong>{clinic.directionsLabel}</strong><p>임시 기준 위치 · 병원의 정확한 주소는 확인 후 안내합니다.</p><a href={clinic.naverMapURL}>{clinic.directionsLabel} 지도 보기</a></div><div className="content-grid section"><section><h2>주차 안내</h2><p>{clinic.parking||'주차 가능 여부와 이용 방법 확인 중'}</p></section><section><h2>대중교통 안내</h2><p>{clinic.transit||'주변 정류장 및 역에서의 방문 경로 확인 중'}</p></section></div><section><h2>전화 문의</h2><p><a href={`tel:${clinic.phone.replace(/[^\d+]/g,'')}`}>{clinic.phone}</a></p></section><ContactActions/></div>;}
+import { Breadcrumb, PageIntro, Hours, ContactActions } from '@/components/clinic-ui';
+import { BreadcrumbSchema } from '@/components/structured-data';
+import { clinic, addressText } from '@/config/clinic';
+import { metadata } from '@/lib/seo';
+export const generateMetadata = () => metadata('오시는 길 · 진료시간', `${addressText}. 연수행복치과의원 위치와 평일·주말·공휴일 진료시간 안내.`, '/location');
+export default function Page() {
+ return <div className="container content"><Breadcrumb title="오시는 길"/><BreadcrumbSchema title="오시는 길" path="/location"/><PageIntro eyebrow="HOURS & LOCATION" title="오시는 길과 진료시간" description="방문에 필요한 정보를 한곳에서 확인하세요."/>
+ <div className="content-grid"><section><h2>진료시간</h2><Hours/><p className="muted">점심시간 및 접수 마감시간은 확인 후 안내합니다.</p></section><section><h2>위치 안내</h2><p>{addressText}</p><p>연수행복치과의원은 건물 1층에 있습니다.</p><a className="button" href={clinic.googleMapURL}>구글 지도에서 위치 보기</a></section></div>
+ <div className="map-placeholder"><strong>연수행복치과의원</strong><p>{addressText}</p><a className="button secondary" href={clinic.googleMapURL}>구글 지도 열기</a></div>
+ <div className="content-grid section"><section><h2>주차 안내</h2><p>{clinic.parking || '주차 가능 여부와 이용 방법 확인 중'}</p></section><section><h2>대중교통 안내</h2><p>{clinic.transit}</p></section></div>
+ <section><h2>전화 문의</h2><p><a href={`tel:${clinic.phone.replace(/[^\d+]/g,'')}`}>{clinic.phone}</a></p></section><ContactActions/>
+ </div>;
+}
