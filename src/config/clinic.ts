@@ -11,4 +11,4 @@ export const clinic = {
   contentVerified: true,
 };
 export const addressText = clinic.address.full || `${clinic.address.region} ${clinic.address.district} ${clinic.address.locality}`;
-export const siteURL = process.env.NEXT_PUBLIC_SITE_URL || '';
+export const siteURL = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.dental365.net';
