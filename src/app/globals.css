@@ -18,3 +18,5 @@ html{font-size:20px}body{font-size:1rem;color:#173537}p{color:#354f51}.button{fo
 a[href^="tel:"]{--contact-icon:url('/images/icon-phone.svg')}.naver{--contact-icon:url('/images/icon-calendar.svg')}.kakao{--contact-icon:url('/images/icon-kakao.svg')}a[href*="maps/"],a[href*="location"],a[href="#guide-location"]{--contact-icon:url('/images/icon-map.svg')}
 @media(max-width:760px){.mobile-actions>a{display:flex;align-items:center;justify-content:center}.mobile-actions>a::before{width:26px;height:26px;flex-basis:26px}}
 .button.kakao::before,.mobile-actions>a.kakao::before{background:url("/images/icon-kakao.svg") center/contain no-repeat;mask:none;-webkit-mask:none}
+
+.button[href^='tel:'],.mobile-actions>a[href^='tel:']{background:#188038;color:#fff;border-color:#188038}.button[href^='tel:']:hover,.mobile-actions>a[href^='tel:']:hover{background:#146c2e}
