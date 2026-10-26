@@ -10,3 +10,10 @@
 - Live integration test: docs/verify-live-inbox.sql, executed via authenticated Supabase CLI; synthetic insert/edit/ack/confirmation is rolled back.
 - Existing anonymous table access restrictions retained. acknowledge_appointment is granted only to authenticated and checks clinic_admins membership internally.
 - The staff confirmation form submits the version captured when it opened, so automatic refresh cannot silently confirm a patient's later changed request.
+
+## Unread reminder cadence
+- Default: 3 minutes. Staff may select 1, 3, 5 minutes, or repeat off for the current page. Sound still requires explicit activation after login.
+- Reminders are evaluated on successful inbox refreshes using the current server unread flags; connection errors cannot sound stale unread reminders.
+- A batch of unread requests produces one chime. New patient revisions take priority over a due reminder and restart the interval. Reconnection does not replay missed intervals.
+- All read / sound off / logout stops repeats. Repeat off retains immediate incoming alerts. Sound testing, enabling sound and cadence changes start a fresh interval.
+- Node 24+ tests: node --test docs/test-appointment-reminders.mjs (10 timing, mute, acknowledgement and deduplication scenarios).

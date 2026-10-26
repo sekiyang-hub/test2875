@@ -2,12 +2,14 @@
 import {useCallback,useEffect,useRef,useState} from 'react';
 import {loginStatusSession,logoutStatus,refreshStatusSession,StatusAuthError,type StaffSession} from '@/lib/status-store';
 import {acknowledgeAppointment,appointmentPreview,listAppointments,type Appointment} from '@/lib/simple-appointments';
-import {incomingRevisions,unreadAppointments} from '@/lib/appointment-inbox';
+import {incomingRevisions,nextInboxAlert,unreadAppointments,type ReminderMinutes} from '@/lib/appointment-inbox';
 
 export function useAppointmentInbox(samples:Appointment[]){
  const [rows,setRows]=useState<Appointment[]>(appointmentPreview?samples:[]);
  const [token,setToken]=useState(''),[connection,setConnection]=useState('로그인 후 자동 확인을 시작합니다.');
  const [lastChecked,setLastChecked]=useState(''),[sound,setSound]=useState(false),[soundNotice,setSoundNotice]=useState('');
+ const [reminderMinutes,setReminderMinutes]=useState<ReminderMinutes>(3);
+ const reminderPeriod=useRef<ReminderMinutes>(3),lastAlertAt=useRef<number|null>(null);
  const session=useRef<StaffSession|null>(null),epoch=useRef(0),flight=useRef<Promise<void>|null>(null);
  const versions=useRef(new Map<string,number>()),initialized=useRef(false);
  const audio=useRef<AudioContext|null>(null),soundOn=useRef(false);
@@ -23,7 +25,11 @@ export function useAppointmentInbox(samples:Appointment[]){
   });
  },[]);
  const receive=useCallback((next:Appointment[])=>{
-  if(initialized.current&&incomingRevisions(versions.current,next).length&&soundOn.current)chime();
+  const hasUnread=unreadAppointments(next).length>0,now=Date.now();
+  const kind=nextInboxAlert({hasUnread,incoming:initialized.current&&incomingRevisions(versions.current,next).length>0,sound:soundOn.current,minutes:reminderPeriod.current,lastAlertAt:lastAlertAt.current,now});
+  if(kind){chime();lastAlertAt.current=now;if(kind==='reminder')setSoundNotice('미확인 신청이 남아 있어 다시 알려드렸습니다. 내용을 확인해 주세요.');}
+  if(!hasUnread)lastAlertAt.current=null;
+  else if(soundOn.current&&lastAlertAt.current===null)lastAlertAt.current=now;
   for(const row of next)versions.current.set(row.id,row.patient_revision);
   initialized.current=true;setRows(next);
   setLastChecked(new Date().toLocaleTimeString('ko-KR',{hour12:false}));
@@ -46,7 +52,7 @@ export function useAppointmentInbox(samples:Appointment[]){
    }catch(error){
     if(epoch.current!==currentEpoch)return;
     if(error instanceof StatusAuthError||/로그인.*만료/.test((error as Error).message)){
-     epoch.current++;session.current=null;setToken('');setRows([]);setSound(false);soundOn.current=false;
+     epoch.current++;session.current=null;setToken('');setRows([]);setSound(false);soundOn.current=false;lastAlertAt.current=null;
      setConnection('로그인이 만료됐습니다. 다시 로그인해 주세요.');
     }else setConnection('연결이 원활하지 않습니다. 자동으로 재시도합니다.');
     throw error;
@@ -64,7 +70,7 @@ export function useAppointmentInbox(samples:Appointment[]){
  async function logout(){
   const current=session.current;
   epoch.current++;session.current=null;setToken('');setRows([]);versions.current.clear();initialized.current=false;
-  flight.current=null;soundOn.current=false;setSound(false);setConnection('로그아웃했습니다.');
+  flight.current=null;soundOn.current=false;lastAlertAt.current=null;setSound(false);setConnection('로그아웃했습니다.');
   if(current)await logoutStatus(current.accessToken);
  }
  async function markSeen(row:Appointment){
@@ -75,10 +81,17 @@ export function useAppointmentInbox(samples:Appointment[]){
  async function enableSound(){
   try{audio.current??=new AudioContext();await audio.current.resume();
    if(audio.current.state!=='running')throw new Error('재생 권한을 확인해 주세요.');
-   soundOn.current=true;setSound(true);setSoundNotice('알림음이 켜졌습니다. 새 신청과 환자 수정 시 소리가 납니다.');chime();
+   soundOn.current=true;lastAlertAt.current=Date.now();setSound(true);setSoundNotice('알림음이 켜졌습니다. 새 신청과 환자 수정 시 소리가 납니다.');chime();
   }catch{setSound(false);soundOn.current=false;setSoundNotice('소리를 재생하지 못했습니다. 브라우저 음소거와 스피커를 확인해 주세요.');}
  }
- function disableSound(){soundOn.current=false;setSound(false);setSoundNotice('알림음이 꺼졌습니다. 목록과 미확인 표시는 계속 갱신됩니다.');}
+ function disableSound(){soundOn.current=false;lastAlertAt.current=null;setSound(false);setSoundNotice('알림음이 꺼졌습니다. 목록과 미확인 표시는 계속 갱신됩니다.');}
+ function changeReminder(minutes:ReminderMinutes){reminderPeriod.current=minutes;setReminderMinutes(minutes);lastAlertAt.current=Date.now();}
+ function testSound(){chime();lastAlertAt.current=Date.now();}
+ useEffect(()=>{
+  if(!appointmentPreview||!sound)return;
+  const timer=window.setInterval(()=>receive(rows),5000);
+  return ()=>clearInterval(timer);
+ },[sound,rows,receive]);
  useEffect(()=>{
   if(!token||appointmentPreview)return;
   const check=()=>{void refresh().catch(()=>{});};
@@ -100,5 +113,5 @@ export function useAppointmentInbox(samples:Appointment[]){
   if(!initialized.current){for(const row of rows)versions.current.set(row.id,row.patient_revision);initialized.current=true;}
   receive(next);
  }
- return {rows,setRows,token,connection,lastChecked,sound,soundNotice,unread,refresh,login,logout,markSeen,enableSound,disableSound,chime,simulate};
+ return {rows,setRows,token,connection,lastChecked,sound,soundNotice,unread,reminderMinutes,changeReminder,refresh,login,logout,markSeen,enableSound,disableSound,testSound,simulate};
 }

@@ -1,7 +1,7 @@
 'use client';
 import {useState} from 'react';
 import {appointmentLabels,appointmentPreview,processAppointment,slotLabel,type Appointment} from '@/lib/simple-appointments';
-import {inboxLabel} from '@/lib/appointment-inbox';
+import {inboxLabel,reminderOptions,type ReminderMinutes} from '@/lib/appointment-inbox';
 import {useAppointmentInbox} from './use-appointment-inbox';
 const samples:Appointment[]=[
  {id:'preview-1',patient_name:'체험 환자',phone:'+821000000000',preferred_at:'2026-10-28T05:00:00Z',confirmed_at:null,status:'pending',created_at:'2026-10-26T01:00:00Z',updated_at:'2026-10-26T01:00:00Z',patient_revision:1,staff_seen_revision:0,patient_changed_at:'2026-10-26T01:00:00Z',needs_review:true},
@@ -28,9 +28,11 @@ export function BookingAdmin(){
    <div className="inbox-heading"><h2 aria-live="polite">미확인 신청 <strong>{inbox.unread}건</strong></h2><button className="button secondary" onClick={()=>setFilter('unread')}>미확인만 보기</button></div>
    <p className="inbox-connection" role="status">{appointmentPreview?'예시 화면 · 실제 자동 조회 없음':inbox.connection}{inbox.lastChecked&&` · 마지막 확인 ${inbox.lastChecked}`}</p>
    <div className="inbox-controls">
-    {inbox.sound?<><button className="button secondary" onClick={inbox.disableSound}>알림 끄기</button><button className="button secondary" onClick={inbox.chime}>알림음 테스트</button></>:<button className="button" onClick={()=>void inbox.enableSound()}>알림 켜기 · 소리 확인</button>}
+    {inbox.sound?<><button className="button secondary" onClick={inbox.disableSound}>알림 끄기</button><button className="button secondary" onClick={inbox.testSound}>알림음 테스트</button></>:<button className="button" onClick={()=>void inbox.enableSound()}>알림 켜기 · 소리 확인</button>}
     {appointmentPreview&&<button className="button secondary" onClick={inbox.simulate}>새 신청 알림 체험</button>}
    </div>
+   <label className="inbox-reminder">미확인 신청 반복 알림<select value={inbox.reminderMinutes} onChange={e=>inbox.changeReminder(Number(e.target.value) as ReminderMinutes)}>{reminderOptions.map(minutes=><option key={minutes} value={minutes}>{minutes===0?'반복 끄기':`${minutes}분마다`}</option>)}</select></label>
+   <p className="inbox-help">{inbox.reminderMinutes===0?'새 신청·환자 수정 알림만 울리고, 미확인 반복 알림은 울리지 않습니다.':`알림을 켜면 미확인 신청이 남아 있는 동안 ${inbox.reminderMinutes}분마다 한 번 알려드립니다. 여러 건이어도 한 번만 울립니다.`} ‘내용 확인했어요’를 누르거나 직원이 처리한 신청은 반복 알림 대상에서 제외됩니다.</p>
    <p className="inbox-help" role="status">{inbox.soundNotice||'알림 켜기를 한 번 눌러 소리 재생을 허용해 주세요.'}</p>
    <p className="inbox-help">직원 화면과 PC를 켜 두세요. 화면을 닫거나 PC가 절전 상태이면 알림이 중단됩니다. 다른 탭에서는 브라우저에 따라 확인이 늦어질 수 있습니다. 소리와 화면 표시는 예약 확정을 의미하지 않습니다.</p>
   </section>
