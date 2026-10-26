@@ -5,6 +5,8 @@ import { languages, type Language } from '@/content/languages';
 import { metadata } from '@/lib/seo';
 import { ClinicMap } from '@/components/clinic-map';
 import { TranslatedTreatments } from '@/components/translated-treatments';
+import {bookingLanguages} from '@/content/booking-languages';
+import {appointmentsEnabled,appointmentPreview} from '@/lib/simple-appointments';
 
 export const dynamicParams = false;
 export function generateStaticParams() { return Object.keys(languages).map(language => ({ language })); }
@@ -22,7 +24,7 @@ export default async function Guide({ params }: { params: Promise<{ language: st
   const { text, language } = await getLanguage(params);
   return <article className="container language-guide content" lang={text.lang}>
     <div className="page-intro"><h1>{text.title}</h1><p lang="ko">{clinic.name}</p><p>{text.intro}</p>
-      <div className="actions"><a className="button" href={`tel:${clinic.phone}`}>{text.call} · {clinic.phone}</a><a className="button secondary" href="#guide-location">{text.directions}</a></div>
+      <div className="actions">{(appointmentsEnabled||appointmentPreview)&&<Link className="button" href={`/guide/${language}/booking/`}>{bookingLanguages[language].title}</Link>}<a className="button" href={`tel:${clinic.phone}`}>{text.call} · {clinic.phone}</a><a className="button secondary" href="#guide-location">{text.directions}</a></div>
     </div>
     <TranslatedTreatments language={language}/>
     <section id="guide-hours" className="panel"><h2>{text.hours}</h2><div className="hours-list"><div><span>{text.weekdays}</span><strong>{clinic.hours[0].open}–{clinic.hours[0].close}</strong></div><div><span>{text.weekends}</span><strong>{clinic.hours[1].open}–{clinic.hours[1].close}</strong></div></div></section>

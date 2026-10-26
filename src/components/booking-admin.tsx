@@ -1,5 +1,6 @@
 'use client';
 import {useState} from 'react';
+import {bookingLanguageNames,type BookingLocale} from '@/content/booking-languages';
 import {appointmentLabels,appointmentPreview,processAppointment,slotLabel,type Appointment} from '@/lib/simple-appointments';
 import {inboxLabel,reminderOptions,type ReminderMinutes} from '@/lib/appointment-inbox';
 import {useAppointmentInbox} from './use-appointment-inbox';
@@ -46,6 +47,7 @@ export function BookingAdmin(){
    {visible.map(row=><div className={`booking-item${row.needs_review?' inbox-unread':''}`} key={row.id}>
     {row.needs_review&&<div className="inbox-item-heading"><span className={`inbox-badge${row.patient_revision>1?' edited':''}`}>{inboxLabel(row)}</span><button className="button secondary" disabled={busy} onClick={()=>void run(async()=>{await inbox.markSeen(row);setNotice('내용 확인 표시를 저장했습니다. 예약은 통화 후 별도로 확정해 주세요.');})}>내용 확인했어요</button></div>}
     <strong>{appointmentLabels[row.status]} · {row.patient_name}</strong>
+    <p className="inbox-help">신청 화면 언어: {bookingLanguageNames[(row.request_language||'ko') as BookingLocale]||row.request_language}</p>
     {row.patient_revision>1&&<p className="inbox-edit-time">환자 수정: {slotLabel(row.patient_changed_at)}</p>}
     <p>{appointmentPreview?<span>예시 전화번호 · 전화 연결 없음</span>:<a className="button secondary" href={`tel:${row.phone}`}>{row.phone} 전화하기</a>}</p>
     <p>희망: {slotLabel(row.preferred_at)}</p>{row.confirmed_at&&<p>확정: {slotLabel(row.confirmed_at)}</p>}
