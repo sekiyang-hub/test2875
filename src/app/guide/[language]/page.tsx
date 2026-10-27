@@ -7,6 +7,7 @@ import { ClinicMap } from '@/components/clinic-map';
 import { TranslatedTreatments } from '@/components/translated-treatments';
 import {bookingLanguages} from '@/content/booking-languages';
 import {appointmentsEnabled,appointmentPreview} from '@/lib/simple-appointments';
+import {guideHero} from '@/content/guide-hero-languages';
 
 export const dynamicParams = false;
 export function generateStaticParams() { return Object.keys(languages).map(language => ({ language })); }
@@ -17,13 +18,15 @@ async function getLanguage(params: Promise<{ language: string }>) {
 }
 export async function generateMetadata({ params }: { params: Promise<{ language: string }> }) {
   const { language, text } = await getLanguage(params);
-  const result = metadata(text.title, text.intro, `/guide/${language}/`);
+  const hero=guideHero[language];
+  const result = metadata(text.title, `${hero.title} ${hero.subtitle} ${hero.schedule}`, `/guide/${language}/`);
   return { ...result, alternates: { canonical: `${siteURL}/guide/${language}/`, languages: { ko: `${siteURL}/`, ...Object.fromEntries(Object.entries(languages).map(([code, entry]) => [entry.lang, `${siteURL}/guide/${code}/`])) } }, openGraph: { ...result.openGraph, locale: { en: 'en_US', zh: 'zh_CN', vi: 'vi_VN', mn: 'mn_MN', ne: 'ne_NP', ru: 'ru_RU', uz: 'uz_UZ', th: 'th_TH' }[language] } };
 }
 export default async function Guide({ params }: { params: Promise<{ language: string }> }) {
   const { text, language } = await getLanguage(params);
+  const hero=guideHero[language];
   return <article className="container language-guide content" lang={text.lang}>
-    <div className="page-intro"><h1>{text.title}</h1><p lang="ko">{clinic.name}</p><p>{text.intro}</p>
+    <div className="page-intro guide-hero"><span className="eyebrow">{text.title}</span><h1 className="guide-hero-title">{hero.title}</h1><p className="guide-hero-lead">{hero.subtitle}</p><p className="guide-hero-schedule">{hero.schedule}</p>
       <div className="actions">{(appointmentsEnabled||appointmentPreview)&&<Link className="button" href={`/guide/${language}/booking/`}>{bookingLanguages[language].title}</Link>}<a className="button" href={`tel:${clinic.phone}`}>{text.call} · {clinic.phone}</a><a className="button secondary" href="#guide-location">{text.directions}</a></div>
     </div>
     <TranslatedTreatments language={language}/>
