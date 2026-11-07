@@ -4,6 +4,7 @@ import {bookingLanguageNames,type BookingLocale} from '@/content/booking-languag
 import {appointmentLabels,appointmentPreview,processAppointment,slotLabel,type Appointment} from '@/lib/simple-appointments';
 import {inboxLabel,reminderOptions,type ReminderMinutes} from '@/lib/appointment-inbox';
 import {useAppointmentInbox} from './use-appointment-inbox';
+import {clinic} from '@/config/clinic';
 const samples:Appointment[]=[
  {id:'preview-1',patient_name:'체험 환자',phone:'+821000000000',preferred_at:'2026-10-28T05:00:00Z',confirmed_at:null,status:'pending',created_at:'2026-10-26T01:00:00Z',updated_at:'2026-10-26T01:00:00Z',patient_revision:1,staff_seen_revision:0,patient_changed_at:'2026-10-26T01:00:00Z',needs_review:true},
  {id:'preview-2',patient_name:'예시 환자',phone:'+821000000000',preferred_at:'2026-10-29T02:00:00Z',confirmed_at:null,status:'contact_failed',created_at:'2026-10-26T00:00:00Z',updated_at:'2026-10-26T00:00:00Z',patient_revision:2,staff_seen_revision:1,patient_changed_at:'2026-10-26T01:00:00Z',needs_review:true}
@@ -20,6 +21,14 @@ const dateLabel=(iso:string)=>new Intl.DateTimeFormat('ko-KR',{timeZone:'Asia/Se
 const shortDate=(iso:string)=>new Intl.DateTimeFormat('ko-KR',{timeZone:'Asia/Seoul',month:'numeric',day:'numeric',weekday:'short'}).format(new Date(iso));
 function phoneLabel(raw:string){const m=raw.match(/^\+82(10)(\d{4})(\d{4})$/);return m?`0${m[1]}-${m[2]}-${m[3]}`:raw;}
 function ago(iso:string,now:number){const min=Math.max(0,Math.round((now-Date.parse(iso))/60000));if(min<1)return '방금';if(min<60)return `${min}분 전`;const h=Math.round(min/60);if(h<24)return `${h}시간 전`;return `${Math.round(h/24)}일 전`;}
+function smsTemplates(row:Appointment){
+ const head=`[${clinic.name}] ${row.patient_name}님,`,call=`${clinic.phone}로 연락 부탁드립니다.`;
+ const list=[{label:'부재중 안내',body:`${head} 예약 신청 확인차 전화드렸는데 연결되지 않았습니다. 편하실 때 ${call}`}];
+ if(row.status==='confirmed'&&row.confirmed_at)list.unshift({label:'확정 안내',body:`${head} ${slotLabel(row.confirmed_at)} 예약이 확정되었습니다. 변경이 필요하시면 ${clinic.phone}로 연락 주세요.`});
+ else list.push({label:'시간 조율',body:`${head} 희망하신 ${slotLabel(row.preferred_at)}은 예약이 어렵습니다. 가능한 시간을 안내드리려 하니 ${call}`});
+ return [...list,{label:'직접 쓰기',body:''}];
+}
+const smsHref=(phone:string,body:string)=>`sms:${phone}${body?`?body=${encodeURIComponent(body)}`:''}`;
 const slotOf=(row:Appointment)=>row.status==='confirmed'&&row.confirmed_at?row.confirmed_at:row.preferred_at;
 function matches(row:Appointment,filter:Filter){
  if(filter==='all')return true;
@@ -117,7 +126,10 @@ export function BookingAdmin(){
        {row.status==='confirmed'&&row.confirmed_at!==null&&row.confirmed_at!==row.preferred_at&&<> · 원래 희망 {slotLabel(row.preferred_at)}</>}
       </p>
       <div className="ba-actions">
-       {appointmentPreview?<span className="ba-fake-call">예시 번호 · 전화 연결 없음</span>:<a className="button ba-call" href={`tel:${row.phone}`}>{phoneLabel(row.phone)}</a>}
+       {appointmentPreview?<span className="ba-fake-call">예시 번호 · 전화 연결 없음</span>:<><a className="button ba-call" href={`tel:${row.phone}`}>{phoneLabel(row.phone)}</a>
+        <details className="ba-sms"><summary className="button secondary">문자</summary><div className="ba-sms-menu" role="menu">
+         {smsTemplates(row).map(t=><a key={t.label} role="menuitem" href={smsHref(row.phone,t.body)} onClick={e=>{(e.currentTarget.closest('details') as HTMLDetailsElement|null)?.removeAttribute('open');}}><strong>{t.label}</strong>{t.body&&<span>{t.body}</span>}</a>)}
+        </div></details></>}
        {!closed&&<button className="button ba-confirm" disabled={busy} onClick={()=>choose(row,'confirmed')}>{row.status==='confirmed'?'시간 변경':'확정하기'}</button>}
        {row.needs_review&&<button className="button secondary ba-seen" disabled={busy} onClick={()=>void run(async()=>{await inbox.markSeen(row);setNotice('확인 표시를 했어요. 예약은 통화 후 따로 확정해 주세요.');})}>확인했어요</button>}
       </div>
