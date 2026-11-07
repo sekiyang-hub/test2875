@@ -1,4 +1,4 @@
-import { defaultStatusSettings, type ClinicStatusSettings } from './clinic-status';
+import { defaultStatusSettings, type ClinicClosure, type ClinicStatusSettings } from './clinic-status';
 // Publishable project settings; database policies enforce administrator access.
 const url = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://twgxohkkovkefzoyslov.supabase.co';
 const key = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'sb_publishable_xRiq-anmTCtvRBjPLVEx_Q_CqNAxqv7';
@@ -43,3 +43,19 @@ export async function saveStatus(settings: ClinicStatusSettings, token: string) 
   await request('/rest/v1/clinic_status?id=eq.1', { method: 'PATCH', headers: { Prefer: 'return=representation' }, body: JSON.stringify(settings) }, token).then(data => { if (!Array.isArray(data) || data.length !== 1) throw new Error('저장 권한이 없습니다. 관리자 계정을 확인해 주세요.'); });
 }
 export async function logoutStatus(token: string) { await request('/auth/v1/logout', { method: 'POST' }, token); }
+
+export async function readClosures(): Promise<ClinicClosure[]> {
+  const data = await request(`/rest/v1/clinic_closures?select=id,starts_at,ends_at,message&ends_at=gt.${encodeURIComponent(new Date().toISOString())}&order=starts_at.asc&limit=50`);
+  return Array.isArray(data) ? data : [];
+}
+export async function addClosure(closure: Omit<ClinicClosure,'id'>, token: string) {
+  await request('/rest/v1/clinic_closures', { method: 'POST', headers: { Prefer: 'return=minimal' }, body: JSON.stringify(closure) }, token);
+}
+export async function deleteClosure(id: string, token: string) {
+  await request(`/rest/v1/clinic_closures?id=eq.${encodeURIComponent(id)}`, { method: 'DELETE' }, token);
+}
+export type StatusEvent = { id: number; created_at: string; actor_email: string; action: 'status'|'closure_add'|'closure_delete'; detail: Record<string, unknown> };
+export async function readStatusEvents(token: string): Promise<StatusEvent[]> {
+  const data = await request('/rest/v1/clinic_status_events?select=id,created_at,actor_email,action,detail&order=created_at.desc&limit=10', {}, token);
+  return Array.isArray(data) ? data : [];
+}

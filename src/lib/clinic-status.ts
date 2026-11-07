@@ -1,17 +1,25 @@
 export type ClinicMode = 'auto' | 'open' | 'closed' | 'holiday';
 export type ClinicStatusSettings = { mode: ClinicMode; expires_at: string | null; message: string; holiday_dates: string[] };
+export type ClinicClosure = { id: string; starts_at: string; ends_at: string; message: string };
 export const defaultStatusSettings: ClinicStatusSettings = { mode: 'auto', expires_at: null, message: '', holiday_dates: [] };
 export function seoulDate(now: Date) {
   const local = new Date(now.getTime() + 9 * 60 * 60 * 1000);
   return { date: local.toISOString().slice(0, 10), day: local.getUTCDay(), minutes: local.getUTCHours() * 60 + local.getUTCMinutes() };
 }
-export function resolveClinicStatus(now: Date, settings = defaultStatusSettings) {
+// 우선순위: 직접 설정한 상태(기간 내) > 예약된 휴진 > 진료시간에 따른 자동 표시
+export function activeClosure(now: Date, closures: ClinicClosure[] = []) {
+  const t = now.getTime();
+  return closures.find(c => Date.parse(c.starts_at) <= t && Date.parse(c.ends_at) > t) || null;
+}
+export function resolveClinicStatus(now: Date, settings = defaultStatusSettings, closures: ClinicClosure[] = []) {
   const today = seoulDate(now);
   const override = settings.mode !== 'auto' && settings.expires_at && Date.parse(settings.expires_at) > now.getTime();
+  const closure = override ? null : activeClosure(now, closures);
+  if (closure) return { mode: 'holiday' as const, closes: '', message: closure.message, manual: true, until: closure.ends_at, source: 'closure' as const };
   const fixedHoliday = ['01-01','03-01','05-05','06-06','08-15','10-03','10-09','12-25'].includes(today.date.slice(5));
   const closes = today.day === 0 || today.day === 6 || fixedHoliday || settings.holiday_dates.includes(today.date) ? '17:00' : '21:00';
   const mode = override ? settings.mode : today.minutes >= 600 && today.minutes < Number(closes.slice(0,2)) * 60 ? 'open' : 'closed';
-  return { mode: mode as Exclude<ClinicMode,'auto'>, closes, message: override ? settings.message : '', manual: Boolean(override) };
+  return { mode: mode as Exclude<ClinicMode,'auto'>, closes, message: override ? settings.message : '', manual: Boolean(override), until: override ? settings.expires_at : null, source: override ? 'manual' as const : 'auto' as const };
 }
 export const statusLabels = {
   ko: ['진료 중','진료 종료','휴진','오늘','까지 진료','진료시간에 따른 안내 · 방문 전 확인해 주세요'],

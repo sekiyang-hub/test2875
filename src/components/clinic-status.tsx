@@ -2,16 +2,18 @@
 import { useEffect, useState } from 'react';
 import { usePathname } from 'next/navigation';
 import { defaultStatusSettings, resolveClinicStatus, statusLabels } from '@/lib/clinic-status';
-import { readStatus, statusStoreConfigured } from '@/lib/status-store';
+import { readClosures, readStatus, statusStoreConfigured } from '@/lib/status-store';
+import type { ClinicClosure } from '@/lib/clinic-status';
 export function ClinicStatus() {
   const pathname = usePathname();
   const [settings, setSettings] = useState(defaultStatusSettings);
   const [now, setNow] = useState<Date | null>(null);
   const [failed, setFailed] = useState(false);
+  const [closures, setClosures] = useState<ClinicClosure[]>([]);
   useEffect(() => {
     if (!statusStoreConfigured) return;
     let active = true;
-    async function update() { try { const next = await readStatus(); if(active) { setSettings(next); setNow(new Date()); setFailed(false); } } catch { if(active) { setFailed(true); setNow(null); } } }
+    async function update() { try { const [next, upcoming] = await Promise.all([readStatus(), readClosures().catch(() => [] as ClinicClosure[])]); if(active) { setSettings(next); setClosures(upcoming); setNow(new Date()); setFailed(false); } } catch { if(active) { setFailed(true); setNow(null); } } }
     const initialClock = setTimeout(() => setNow(new Date()), 0);
     void update(); const poll = setInterval(update, 30000); const clock = setInterval(() => setNow(new Date()), 1000);
     const focus = () => void update(); window.addEventListener('focus',focus);
@@ -28,6 +30,6 @@ export function ClinicStatus() {
   const currentTime = <time className="clinic-current-time" dateTime={now.toISOString()}><span>{date}</span><strong>{time}</strong></time>;
   if (pathname.startsWith('/admin')) return <div className="container clinic-status">{currentTime}</div>;
   if (failed) return <div className="container clinic-status">{currentTime}<span>{language === 'ko' ? '현재 진료 상태는 전화로 확인해 주세요.' : labels[5]}</span></div>;
-  const result = resolveClinicStatus(now,settings);
+  const result = resolveClinicStatus(now,settings,closures);
   return <div className={`container clinic-status status-${result.mode}`}>{currentTime}<div className="clinic-status-detail" role="status"><strong><span aria-hidden="true" className="status-dot"/>{labels[result.mode === 'open' ? 0 : result.mode === 'closed' ? 1 : 2]}</strong>{result.mode === 'open' && !result.manual && <span>{language === 'ko' ? `오늘 ${result.closes}까지 진료` : `${labels[3]} · ${labels[4]} ${result.closes}`}</span>}{result.message && <span>{result.message}</span>}{!result.manual && <small>{labels[5]}</small>}</div></div>;
 }

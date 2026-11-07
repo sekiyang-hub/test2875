@@ -47,6 +47,32 @@ const rest = (path: string, body: unknown) => {
   });
 };
 
+const restGet = (path: string) => {
+  const url = Deno.env.get("SUPABASE_URL")!, service = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+  return fetch(`${url}/rest/v1/${path}`, { headers: { apikey: service, Authorization: `Bearer ${service}` }, signal: AbortSignal.timeout(10000) }).then((r) => r.json());
+};
+const STATUS_URL = "https://www.dental365.net/admin/";
+const modeNames: Record<string, string> = { open: "진료 중", closed: "진료 종료", holiday: "휴진" };
+const day = (iso: string) => new Intl.DateTimeFormat("ko-KR", { timeZone: "Asia/Seoul", month: "long", day: "numeric", weekday: "short" }).format(new Date(iso));
+
+// 매일 18시(pg_cron) 호출: 30시간 안에 끝나는 직접 설정 상태, 시작·종료되는 예약 휴진을 알려 줍니다.
+async function statusReminders() {
+  const now = Date.now(), soon = now + 30 * 3600000;
+  const [status] = await restGet("clinic_status?id=eq.1&select=mode,expires_at,message");
+  const closures = await restGet(`clinic_closures?select=starts_at,ends_at,message&ends_at=gt.${encodeURIComponent(new Date(now).toISOString())}&order=starts_at.asc`);
+  const lines: string[] = [];
+  if (status && status.mode !== "auto" && status.expires_at) {
+    const t = Date.parse(status.expires_at);
+    if (t > now && t <= soon) lines.push(`⏰ ‘${modeNames[status.mode] ?? status.mode}’ 표시가 ${slot(status.expires_at)}에 끝나고 진료시간 자동 표시로 돌아갑니다.\n연장이 필요하면 관리 화면에서 기간을 바꿔 주세요.`);
+  }
+  for (const c of closures ?? []) {
+    const start = Date.parse(c.starts_at), end = Date.parse(c.ends_at);
+    if (start > now && start <= soon) lines.push(`📅 ${day(c.starts_at)}부터 예약된 휴진이 시작됩니다.${c.message ? `\n안내 문구: ${c.message}` : ""}`);
+    else if (start <= now && end > now && end <= soon) lines.push(`📅 예약된 휴진이 ${day(new Date(end - 1).toISOString())}까지이고, 이후 정상 진료 표시로 돌아갑니다.`);
+  }
+  return lines.length ? `${lines.join("\n\n")}\n\n관리 화면: ${STATUS_URL}` : null;
+}
+
 async function isAdmin(req: Request) {
   const given = req.headers.get("x-notify-key");
   if (!given) return false;
@@ -58,6 +84,16 @@ Deno.serve(async (req) => {
   if (req.method !== "POST") return json({ error: "method" }, 405);
   const token = Deno.env.get("TELEGRAM_BOT_TOKEN"), chatId = Deno.env.get("TELEGRAM_CHAT_ID");
   const body = await req.json().catch(() => ({}));
+
+  if (body?.reminder === true) {
+    if (!(await isAdmin(req))) return json({ error: "forbidden" }, 403);
+    if (!token || !chatId) return json({ skipped: "telegram not configured" });
+    const text = await statusReminders();
+    if (!text) return json({ sent: 0 });
+    if (body.dryRun === true) return json({ dryRun: text });
+    await sendTelegram(token, chatId, text);
+    return json({ sent: "reminder" });
+  }
 
   if (body?.discover === true || body?.test === true) {
     if (!(await isAdmin(req))) return json({ error: "forbidden" }, 403);
