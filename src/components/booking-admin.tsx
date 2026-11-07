@@ -54,7 +54,7 @@ function groupRows(rows:Appointment[],now:number){
 export function BookingAdmin(){
  const inbox=useAppointmentInbox(samples);
  const {rows,token}=inbox;
- const [email,setEmail]=useState(''),[password,setPassword]=useState(''),[filter,setFilter]=useState<Filter>('waiting'),[notice,setNotice]=useState(''),[busy,setBusy]=useState(false);
+ const [email,setEmail]=useState(''),[password,setPassword]=useState(''),[filter,setFilter]=useState<Filter>('waiting'),[notice,setNotice]=useState(''),[busy,setBusy]=useState(false),[keep,setKeep]=useState(true);
  const [undo,setUndo]=useState<{id:string;name:string}|null>(null);
  async function run(fn:()=>Promise<void>){setBusy(true);setNotice('');setUndo(null);try{await fn();}catch(e){setNotice((e as Error).message);}finally{setBusy(false);}}
  const doneMessage:Record<string,string>={done:'처리 완료',contact_failed:'연락 안 됨',rejected:'접수 불가',cancelled:'취소',pending:'처리 대기'};
@@ -72,11 +72,13 @@ export function BookingAdmin(){
  const loggedIn=Boolean(token)||appointmentPreview;
  const offline=/원활|만료/.test(inbox.connection);
 
+ if(!loggedIn&&inbox.restoring)return <article className="container content booking-page ba"><p className="ba-restoring" role="status">로그인 상태를 확인하고 있습니다…</p></article>;
  if(!loggedIn)return <article className="container content booking-page ba">
   <h1 className="ba-login-title">예약 신청 관리</h1>
-  <form className="booking-card ba-login" onSubmit={e=>{e.preventDefault();void run(async()=>{try{await inbox.login(email,password);}finally{setPassword('');}});}}>
+  <form className="booking-card ba-login" onSubmit={e=>{e.preventDefault();void run(async()=>{try{await inbox.login(email,password,keep);}finally{setPassword('');}});}}>
    <label>관리자 이메일<input required type="email" autoComplete="username" value={email} onChange={e=>setEmail(e.target.value)}/></label>
    <label>비밀번호<input required type="password" autoComplete="current-password" value={password} onChange={e=>setPassword(e.target.value)}/></label>
+   <label className="booking-check ba-keep"><input type="checkbox" checked={keep} onChange={e=>setKeep(e.target.checked)}/>이 PC에서 로그인 유지 <small>(여러 사람이 쓰는 PC라면 해제하세요)</small></label>
    <button className="button" disabled={busy}>로그인</button><p role="status">{busy?'로그인 중입니다…':notice||inbox.connection}</p>
   </form>
  </article>;
