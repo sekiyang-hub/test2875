@@ -4,11 +4,21 @@ import {loginStatusSession,logoutStatus,refreshStatusSession,StatusAuthError,typ
 import {acknowledgeAppointment,appointmentPreview,listAppointments,type Appointment} from '@/lib/simple-appointments';
 import {incomingRevisions,nextInboxAlert,unreadAppointments,type ReminderMinutes} from '@/lib/appointment-inbox';
 
+// '로그인 유지'를 고른 PC에만 갱신 토큰을 저장합니다. 로그아웃·권한 만료 시 지웁니다.
+const REMEMBER_KEY='dental365.staff.session';
+const storage={
+ read(){try{return window.localStorage.getItem(REMEMBER_KEY);}catch{return null;}},
+ write(token:string){try{window.localStorage.setItem(REMEMBER_KEY,token);}catch{}},
+ clear(){try{window.localStorage.removeItem(REMEMBER_KEY);}catch{}},
+};
+
 export function useAppointmentInbox(samples:Appointment[]){
  const [rows,setRows]=useState<Appointment[]>(appointmentPreview?samples:[]);
  const [token,setToken]=useState(''),[connection,setConnection]=useState('로그인 후 자동 확인을 시작합니다.');
  const [lastChecked,setLastChecked]=useState(''),[sound,setSound]=useState(false),[soundNotice,setSoundNotice]=useState('');
  const [reminderMinutes,setReminderMinutes]=useState<ReminderMinutes>(3);
+ const [restoring,setRestoring]=useState(false);
+ const remember=useRef(false);
  const reminderPeriod=useRef<ReminderMinutes>(3),lastAlertAt=useRef<number|null>(null);
  const session=useRef<StaffSession|null>(null),epoch=useRef(0),flight=useRef<Promise<void>|null>(null);
  const versions=useRef(new Map<string,number>()),initialized=useRef(false);
@@ -42,9 +52,11 @@ export function useAppointmentInbox(samples:Appointment[]){
    try{
     let current=session.current;if(!current)return;
     if(current.expiresAt<Date.now()+60000){
-     current=await refreshStatusSession(current.refreshToken);
+     const stored=remember.current?storage.read():null;
+     current=await refreshStatusSession(stored||current.refreshToken);
      if(epoch.current!==currentEpoch)return;
      session.current=current;setToken(current.accessToken);
+     if(remember.current)storage.write(current.refreshToken);
     }
     const next=await listAppointments(current.accessToken);
     if(epoch.current!==currentEpoch)return;
@@ -53,6 +65,7 @@ export function useAppointmentInbox(samples:Appointment[]){
     if(epoch.current!==currentEpoch)return;
     if(error instanceof StatusAuthError||/로그인.*만료/.test((error as Error).message)){
      epoch.current++;session.current=null;setToken('');setRows([]);setSound(false);soundOn.current=false;lastAlertAt.current=null;
+     storage.clear();remember.current=false;
      setConnection('로그인이 만료됐습니다. 다시 로그인해 주세요.');
     }else setConnection('연결이 원활하지 않습니다. 자동으로 재시도합니다.');
     throw error;
@@ -62,13 +75,14 @@ export function useAppointmentInbox(samples:Appointment[]){
   void job.finally(()=>{if(flight.current===job)flight.current=null;}).catch(()=>{});
   return job;
  },[receive]);
- async function login(email:string,password:string){
+ async function login(email:string,password:string,keep=false){
   const next=await loginStatusSession(email,password);
   epoch.current++;session.current=next;versions.current.clear();initialized.current=false;flight.current=null;
+  remember.current=keep;if(keep)storage.write(next.refreshToken);else storage.clear();
   setToken(next.accessToken);await refresh();
  }
  async function logout(){
-  const current=session.current;
+  const current=session.current;storage.clear();remember.current=false;
   epoch.current++;session.current=null;setToken('');setRows([]);versions.current.clear();initialized.current=false;
   flight.current=null;soundOn.current=false;lastAlertAt.current=null;setSound(false);setConnection('로그아웃했습니다.');
   if(current)await logoutStatus(current.accessToken);
@@ -106,6 +120,21 @@ export function useAppointmentInbox(samples:Appointment[]){
   const title=document.title;document.title=unread?`(${unread}) 미확인 예약 신청 | 연수행복치과`:'예약 신청 관리 | 연수행복치과';
   return ()=>{document.title=title;};
  },[unread]);
+ useEffect(()=>{
+  if(appointmentPreview)return;
+  const stored=storage.read();if(!stored)return;
+  const currentEpoch=epoch.current;
+  // eslint-disable-next-line react-hooks/set-state-in-effect -- one-time restore of a remembered login on mount.
+  setRestoring(true);setConnection('로그인 상태를 확인하고 있습니다…');
+  refreshStatusSession(stored).then(async next=>{
+   if(epoch.current!==currentEpoch)return;
+   remember.current=true;storage.write(next.refreshToken);
+   session.current=next;setToken(next.accessToken);await refresh().catch(()=>{});
+  }).catch(error=>{
+   if(error instanceof StatusAuthError)storage.clear();
+   setConnection(error instanceof StatusAuthError?'로그인 유지가 만료됐습니다. 다시 로그인해 주세요.':'연결이 원활하지 않습니다. 새로고침하거나 다시 로그인해 주세요.');
+  }).finally(()=>setRestoring(false));
+ },[refresh]);
  useEffect(()=>()=>{epoch.current++;session.current=null;void audio.current?.close().catch(()=>{});},[]);
  function simulate(){
   const now=new Date().toISOString();
@@ -113,5 +142,5 @@ export function useAppointmentInbox(samples:Appointment[]){
   if(!initialized.current){for(const row of rows)versions.current.set(row.id,row.patient_revision);initialized.current=true;}
   receive(next);
  }
- return {rows,setRows,token,connection,lastChecked,sound,soundNotice,unread,reminderMinutes,changeReminder,refresh,login,logout,markSeen,enableSound,disableSound,testSound,simulate};
+ return {rows,setRows,token,restoring,connection,lastChecked,sound,soundNotice,unread,reminderMinutes,changeReminder,refresh,login,logout,markSeen,enableSound,disableSound,testSound,simulate};
 }
