@@ -137,3 +137,4 @@ body:has(.sa) .language-nav,body:has(.sa) .clinic-status:not(.sa *),body:has(.sa
 @media(max-width:600px){.sa-modes,.sa-dates{grid-template-columns:1fr}.sa-card{padding:16px}.sa-log li{grid-template-columns:1fr auto}.sa-log time{grid-column:1/-1}}
 .sa .sa-field{border:0!important;padding:0!important;margin:0!important;background:none!important}.sa .sa-field legend{padding:0!important}
 .sa-list button{white-space:nowrap;flex-shrink:0}
+.ba-icon.pending{border-color:#0e7490;color:#0e5f75;background:#ecfeff}.ba-sound-note.pending{padding:8px 12px;border-radius:10px;background:#ecfeff;color:#0e5f75;font-weight:600}

@@ -96,7 +96,9 @@ export function BookingAdmin(){
    <div className="ba-top-actions">
     {inbox.sound
      ?<button className="ba-icon on" onClick={inbox.disableSound} title="알림음 끄기">🔔<span>알림 켜짐</span></button>
-     :<button className="ba-icon attention" onClick={()=>void inbox.enableSound()} title="알림음 켜기">🔕<span>알림 켜기</span></button>}
+     :inbox.soundPending
+      ?<button className="ba-icon pending" onClick={()=>void inbox.enableSound()} title="화면을 한 번 누르면 알림음이 켜집니다">🔔<span>알림 준비 중</span></button>
+      :<button className="ba-icon attention" onClick={()=>void inbox.enableSound()} title="알림음 켜기">🔕<span>알림 꺼짐</span></button>}
     {appointmentPreview
      ?<button className="ba-icon" onClick={inbox.simulate}>＋<span>새 신청 체험</span></button>
      :<button className="ba-icon" disabled={busy} onClick={()=>void run(inbox.refresh)} title="지금 새로고침">↻<span>새로고침</span></button>}
@@ -104,6 +106,7 @@ export function BookingAdmin(){
   </header>
 
   {inbox.unread>0&&filter!=='unread'&&<button className="ba-alert" onClick={()=>setFilter('unread')}><strong>새로 들어온 신청 {inbox.unread}건</strong><span>눌러서 확인하기 →</span></button>}
+  {inbox.soundPending&&!inbox.sound&&<p className="ba-sound-note pending" role="status">🔔 알림음이 켜져 있어요. 브라우저 정책상 화면을 아무 곳이나 한 번 누르면 소리가 활성화됩니다.</p>}
   {inbox.soundNotice&&<p className="ba-sound-note" role="status">{inbox.soundNotice}</p>}
 
   <nav className="ba-tabs" aria-label="신청 구분">
