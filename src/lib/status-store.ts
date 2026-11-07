@@ -5,6 +5,13 @@ const key = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || process.env.NEXT
 export const statusStoreConfigured = Boolean(url && key);
 export class StatusAuthError extends Error {}
 export type StaffSession={accessToken:string;refreshToken:string;expiresAt:number};
+// '로그인 유지'를 고른 PC에만 갱신 토큰을 저장합니다. 관리 화면(/admin, /admin/bookings)이 함께 사용합니다.
+const REMEMBER_KEY='dental365.staff.session';
+export const rememberedLogin={
+ read(){try{return window.localStorage.getItem(REMEMBER_KEY);}catch{return null;}},
+ write(token:string){try{window.localStorage.setItem(REMEMBER_KEY,token);}catch{}},
+ clear(){try{window.localStorage.removeItem(REMEMBER_KEY);}catch{}},
+};
 async function request(path: string, init: RequestInit = {}, token?: string) {
   if (!url || !key) throw new Error('관리 기능 연결 설정이 필요합니다.');
   const response = await fetch(`${url}${path}`, { ...init, cache: 'no-store', headers: { apikey: key, ...(token ? { Authorization: `Bearer ${token}` } : {}), 'Content-Type': 'application/json', ...init.headers }, signal: AbortSignal.timeout(10000) });

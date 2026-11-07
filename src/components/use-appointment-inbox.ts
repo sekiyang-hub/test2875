@@ -1,16 +1,10 @@
 'use client';
 import {useCallback,useEffect,useRef,useState} from 'react';
-import {loginStatusSession,logoutStatus,refreshStatusSession,StatusAuthError,type StaffSession} from '@/lib/status-store';
+import {loginStatusSession,logoutStatus,refreshStatusSession,rememberedLogin,StatusAuthError,type StaffSession} from '@/lib/status-store';
 import {acknowledgeAppointment,appointmentPreview,listAppointments,type Appointment} from '@/lib/simple-appointments';
 import {incomingRevisions,nextInboxAlert,unreadAppointments,type ReminderMinutes} from '@/lib/appointment-inbox';
 
-// '로그인 유지'를 고른 PC에만 갱신 토큰을 저장합니다. 로그아웃·권한 만료 시 지웁니다.
-const REMEMBER_KEY='dental365.staff.session';
-const storage={
- read(){try{return window.localStorage.getItem(REMEMBER_KEY);}catch{return null;}},
- write(token:string){try{window.localStorage.setItem(REMEMBER_KEY,token);}catch{}},
- clear(){try{window.localStorage.removeItem(REMEMBER_KEY);}catch{}},
-};
+const storage=rememberedLogin;
 
 export function useAppointmentInbox(samples:Appointment[]){
  const [rows,setRows]=useState<Appointment[]>(appointmentPreview?samples:[]);
