@@ -109,3 +109,4 @@ body:has(.ba) .language-nav,body:has(.ba) .clinic-status,body:has(.ba) .mobile-a
 @media(max-width:600px){.ba .ba-actions .ba-sms{flex:1 1 auto}.ba-sms summary{width:100%;justify-content:center}.ba-sms-menu{left:auto;right:0}}
 .ba-status{display:flex;align-items:center;gap:12px;flex-wrap:wrap}.ba-undo{padding:4px 12px;min-height:34px;border:1px solid #006c70;border-radius:999px;background:#fff;color:#006c70;font:inherit;font-size:.7rem;font-weight:700;cursor:pointer}
 .ba-keep{font-size:.8rem;align-items:center!important}.ba-keep input{margin-top:0!important}.ba-keep small{color:#5d7779;font-size:.7rem}.ba-restoring{padding:60px 0;text-align:center;color:#3f6164}
+.status-admin .status-keep{display:flex!important;align-items:center;gap:10px;font-size:.85rem}.status-admin .status-keep input{width:22px;height:22px;flex-shrink:0}.status-admin .status-keep small{color:var(--muted);font-size:.75rem}
