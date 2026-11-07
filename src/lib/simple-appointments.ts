@@ -7,7 +7,7 @@ export const appointmentsEnabled=appointmentsLaunchReady&&process.env.NEXT_PUBLI
 const url=process.env.NEXT_PUBLIC_SUPABASE_URL||'https://twgxohkkovkefzoyslov.supabase.co';
 const key=process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY||process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY||'sb_publishable_xRiq-anmTCtvRBjPLVEx_Q_CqNAxqv7';
 export type Appointment={id:string;patient_name:string;phone:string;preferred_at:string;confirmed_at:string|null;status:string;created_at:string;updated_at:string;patient_revision:number;staff_seen_revision:number;patient_changed_at:string;needs_review:boolean;request_language?:string};
-export const appointmentLabels:Record<string,string>={pending:'신청 접수',confirmed:'직원 확인 · 확정',rejected:'접수 불가',cancelled:'취소',contact_failed:'연락 필요'};
+export const appointmentLabels:Record<string,string>={pending:'신청 접수',confirmed:'직원 확인 · 확정',done:'처리 완료',rejected:'접수 불가',cancelled:'취소',contact_failed:'연락 필요'};
 async function api(path:string,body:unknown|undefined,token?:string){
  const response=await fetch(`${url}/rest/v1/${path}`,{method:body===undefined?'GET':'POST',headers:{apikey:key,'Content-Type':'application/json',...(token?{Authorization:`Bearer ${token}`}:{})},body:body===undefined?undefined:JSON.stringify(body),cache:'no-store',signal:AbortSignal.timeout(15000)});
  if(!response.ok){const data=await response.json().catch(()=>null);throw new Error(data?.code==='P0001'?data.message:response.status===401?'로그인이 만료되었습니다. 다시 로그인해 주세요.':'접수를 완료하지 못했습니다. 잠시 후 다시 시도하거나 병원에 전화해 주세요.');}
