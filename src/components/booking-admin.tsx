@@ -5,6 +5,7 @@ import {appointmentLabels,appointmentPreview,processAppointment,slotLabel,type A
 import {inboxLabel,reminderOptions,type ReminderMinutes} from '@/lib/appointment-inbox';
 import {useAppointmentInbox} from './use-appointment-inbox';
 import {clinic} from '@/config/clinic';
+import {AdminTabs} from './admin-tabs';
 const samples:Appointment[]=[
  {id:'preview-1',patient_name:'체험 환자',phone:'+821000000000',preferred_at:'2026-10-28T05:00:00Z',confirmed_at:null,status:'pending',created_at:'2026-10-26T01:00:00Z',updated_at:'2026-10-26T01:00:00Z',patient_revision:1,staff_seen_revision:0,patient_changed_at:'2026-10-26T01:00:00Z',needs_review:true},
  {id:'preview-2',patient_name:'예시 환자',phone:'+821000000000',preferred_at:'2026-10-29T02:00:00Z',confirmed_at:null,status:'contact_failed',created_at:'2026-10-26T00:00:00Z',updated_at:'2026-10-26T00:00:00Z',patient_revision:2,staff_seen_revision:1,patient_changed_at:'2026-10-26T01:00:00Z',needs_review:true}
@@ -74,6 +75,7 @@ export function BookingAdmin(){
 
  if(!loggedIn&&inbox.restoring)return <article className="container content booking-page ba"><p className="ba-restoring" role="status">로그인 상태를 확인하고 있습니다…</p></article>;
  if(!loggedIn)return <article className="container content booking-page ba">
+  <AdminTabs current="bookings"/>
   <h1 className="ba-login-title">예약 신청 관리</h1>
   <form className="booking-card ba-login" onSubmit={e=>{e.preventDefault();void run(async()=>{try{await inbox.login(email,password,keep);}finally{setPassword('');}});}}>
    <label>관리자 이메일<input required type="email" autoComplete="username" value={email} onChange={e=>setEmail(e.target.value)}/></label>
@@ -85,6 +87,7 @@ export function BookingAdmin(){
 
  return <article className="container booking-page ba">
   {appointmentPreview&&<aside className="preview-banner">관리자 체험 · 아래 내용은 예시이며 실제 환자 정보가 아닙니다. 변경은 화면에서만 반영됩니다.</aside>}
+  <AdminTabs current="bookings"/>
   <header className="ba-top">
    <div className="ba-title">
     <h1>예약 신청</h1>
