@@ -5,13 +5,18 @@ import {acknowledgeAppointment,appointmentPreview,listAppointments,type Appointm
 import {incomingRevisions,nextInboxAlert,unreadAppointments,type ReminderMinutes} from '@/lib/appointment-inbox';
 
 const storage=rememberedLogin;
+// 알림음은 기본으로 켭니다. 직원이 끄면 그 PC에서는 꺼진 상태를 기억합니다.
+const SOUND_KEY='dental365.staff.sound';
+const soundPreferred=()=>{try{return window.localStorage.getItem(SOUND_KEY)!=='off';}catch{return true;}};
+const rememberSound=(on:boolean)=>{try{window.localStorage.setItem(SOUND_KEY,on?'on':'off');}catch{}};
 
 export function useAppointmentInbox(samples:Appointment[]){
  const [rows,setRows]=useState<Appointment[]>(appointmentPreview?samples:[]);
  const [token,setToken]=useState(''),[connection,setConnection]=useState('로그인 후 자동 확인을 시작합니다.');
  const [lastChecked,setLastChecked]=useState(''),[sound,setSound]=useState(false),[soundNotice,setSoundNotice]=useState('');
  const [reminderMinutes,setReminderMinutes]=useState<ReminderMinutes>(3);
- const [restoring,setRestoring]=useState(false);
+ const [restoring,setRestoring]=useState(false),[soundPending,setSoundPending]=useState(false);
+ const unlockCleanup=useRef<(()=>void)|null>(null);
  const remember=useRef(false);
  const reminderPeriod=useRef<ReminderMinutes>(3),lastAlertAt=useRef<number|null>(null);
  const session=useRef<StaffSession|null>(null),epoch=useRef(0),flight=useRef<Promise<void>|null>(null);
@@ -78,7 +83,7 @@ export function useAppointmentInbox(samples:Appointment[]){
  async function logout(){
   const current=session.current;storage.clear();remember.current=false;
   epoch.current++;session.current=null;setToken('');setRows([]);versions.current.clear();initialized.current=false;
-  flight.current=null;soundOn.current=false;lastAlertAt.current=null;setSound(false);setConnection('로그아웃했습니다.');
+  flight.current=null;soundOn.current=false;lastAlertAt.current=null;setSound(false);unlockCleanup.current?.();unlockCleanup.current=null;setSoundPending(false);setConnection('로그아웃했습니다.');
   if(current)await logoutStatus(current.accessToken);
  }
  async function markSeen(row:Appointment){
@@ -86,13 +91,36 @@ export function useAppointmentInbox(samples:Appointment[]){
   await refresh();const current=session.current;if(!current)throw new Error('다시 로그인해 주세요.');
   await acknowledgeAppointment(current.accessToken,row);await refresh();
  }
+ function soundReady(silent:boolean){
+  unlockCleanup.current?.();unlockCleanup.current=null;setSoundPending(false);
+  soundOn.current=true;lastAlertAt.current=Date.now();setSound(true);
+  setSoundNotice(silent?'':'알림음이 켜졌습니다. 새 신청과 환자 수정 시 소리가 납니다.');if(!silent)chime();
+ }
  async function enableSound(){
+  rememberSound(true);
   try{audio.current??=new AudioContext();await audio.current.resume();
    if(audio.current.state!=='running')throw new Error('재생 권한을 확인해 주세요.');
-   soundOn.current=true;lastAlertAt.current=Date.now();setSound(true);setSoundNotice('알림음이 켜졌습니다. 새 신청과 환자 수정 시 소리가 납니다.');chime();
+   soundReady(false);
   }catch{setSound(false);soundOn.current=false;setSoundNotice('소리를 재생하지 못했습니다. 브라우저 음소거와 스피커를 확인해 주세요.');}
  }
- function disableSound(){soundOn.current=false;lastAlertAt.current=null;setSound(false);setSoundNotice('알림음이 꺼졌습니다. 목록과 미확인 표시는 계속 갱신됩니다.');}
+ // 로그인 직후 자동으로 켭니다. 브라우저가 소리를 막으면 화면을 처음 누를 때 조용히 켭니다.
+ const armSound=useCallback(()=>{
+  if(soundOn.current||!soundPreferred())return;
+  try{audio.current??=new AudioContext();}catch{return;}
+  const ctx=audio.current;
+  if(ctx.state==='running'){soundReady(true);return;}
+  void ctx.resume().catch(()=>{});
+  setSoundPending(true);
+  const unlock=()=>{void ctx.resume().then(()=>{if(ctx.state==='running')soundReady(true);}).catch(()=>{});};
+  window.addEventListener('pointerdown',unlock);window.addEventListener('keydown',unlock);
+  unlockCleanup.current?.();
+  unlockCleanup.current=()=>{window.removeEventListener('pointerdown',unlock);window.removeEventListener('keydown',unlock);};
+  window.setTimeout(()=>{if(ctx.state==='running'&&!soundOn.current)soundReady(true);},300);
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- soundReady only touches refs and state setters.
+ },[]);
+ useEffect(()=>{if(token&&!appointmentPreview)armSound();},[token,armSound]);
+ useEffect(()=>()=>{unlockCleanup.current?.();},[]);
+ function disableSound(){rememberSound(false);unlockCleanup.current?.();unlockCleanup.current=null;setSoundPending(false);soundOn.current=false;lastAlertAt.current=null;setSound(false);setSoundNotice('알림음이 꺼졌습니다. 목록과 미확인 표시는 계속 갱신됩니다.');}
  function changeReminder(minutes:ReminderMinutes){reminderPeriod.current=minutes;setReminderMinutes(minutes);lastAlertAt.current=Date.now();}
  function testSound(){chime();lastAlertAt.current=Date.now();}
  useEffect(()=>{
@@ -136,5 +164,5 @@ export function useAppointmentInbox(samples:Appointment[]){
   if(!initialized.current){for(const row of rows)versions.current.set(row.id,row.patient_revision);initialized.current=true;}
   receive(next);
  }
- return {rows,setRows,token,restoring,connection,lastChecked,sound,soundNotice,unread,reminderMinutes,changeReminder,refresh,login,logout,markSeen,enableSound,disableSound,testSound,simulate};
+ return {rows,setRows,token,restoring,connection,lastChecked,sound,soundPending,soundNotice,unread,reminderMinutes,changeReminder,refresh,login,logout,markSeen,enableSound,disableSound,testSound,simulate};
 }
